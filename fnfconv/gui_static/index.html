@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FNFVSlice-Converter</title>
+<style>
+:root{--bg:#f6f5fb;--card:#fff;--ink:#1c1b29;--mute:#6b6a7c;--line:#e2e0ee;--acc:#6d4aff;--acc-ink:#fff;--ok:#18a058;--warn:#c77d00;--err:#d03050;--code:#f0eefa}
+@media (prefers-color-scheme:dark){:root{--bg:#12111a;--card:#1c1b29;--ink:#ecebf7;--mute:#9a98b0;--line:#2e2c42;--acc:#8c70ff;--acc-ink:#12111a;--ok:#3ecf8e;--warn:#f0b429;--err:#ff6b81;--code:#14131e}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:860px;margin:0 auto;padding:28px 18px 60px}
+h1{font-size:24px;margin:0 0 2px}
+.sub{color:var(--mute);margin:0 0 22px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+.card h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin:0 0 12px}
+#drop{border:2px dashed var(--line);border-radius:12px;padding:26px;text-align:center;cursor:pointer;color:var(--mute);transition:.15s}
+#drop.over,#drop:hover{border-color:var(--acc);color:var(--ink)}
+#drop b{color:var(--ink)}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.row>*{flex:1 1 200px}
+label{display:block;font-size:13px;color:var(--mute);margin-bottom:4px}
+input[type=text],input[type=password],select{width:100%;padding:9px 10px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+input:focus,select:focus{outline:2px solid var(--acc);outline-offset:1px}
+.chk{display:flex;gap:8px;align-items:flex-start;margin:6px 0;color:var(--ink);font-size:14px}
+.chk small{color:var(--mute);display:block}
+button{font:inherit;font-weight:600;padding:10px 18px;border-radius:10px;border:0;background:var(--acc);color:var(--acc-ink);cursor:pointer}
+button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700;background:var(--code);border:1px solid var(--line)}
+.badge.psych{color:#e0457b}.badge.codename{color:#2f8fd8}.badge.unknown{color:var(--err)}
+#info{margin-top:12px;font-size:14px}
+#info .ev{color:var(--mute);font-size:12px;margin-top:4px}
+#bar{height:6px;background:var(--line);border-radius:9px;overflow:hidden;margin-top:12px;display:none}
+#bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .1s}
+pre#log{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:12px;max-height:220px;overflow:auto;font:12.5px/1.45 ui-monospace,Consolas,monospace;margin:12px 0 0;white-space:pre-wrap}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}
+.chip{padding:6px 12px;border-radius:10px;background:var(--code);border:1px solid var(--line);font-size:13px}
+.chip b{font-size:16px;margin-right:4px}
+.chip.w b{color:var(--warn)}.chip.t b{color:var(--err)}.chip.k b{color:var(--ok)}
+#rep{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:6px 16px 12px;max-height:420px;overflow:auto}
+#rep h1{font-size:18px}#rep h2{font-size:15px;margin:16px 0 4px}#rep ul{margin:4px 0;padding-left:20px}#rep li{margin:2px 0;font-size:13.5px}
+.err{color:var(--err);font-weight:600}
+.hide{display:none}
+.note{font-size:12.5px;color:var(--mute);margin-top:6px}
+</style>
+</head>
+<body>
+<main>
+  <h1>FNFVSlice-Converter</h1>
+  <p class="sub">Psych Engine / Codename Engine → V-Slice, con análisis y traducción de scripts asistida por IA.</p>
+
+  <section class="card">
+    <h2>1 · Mod de origen</h2>
+    <div id="drop"><b>Arrastra aquí el .zip de tu mod</b> o haz clic para elegirlo<input id="file" type="file" accept=".zip" class="hide"></div>
+    <div class="row">
+      <div style="flex:3 1 300px"><label for="path">…o ruta de una carpeta en este equipo</label>
+        <input id="path" type="text" placeholder="C:\mods\MiMod   ó   /home/yo/mods/MiMod"></div>
+      <div style="flex:0 0 auto;align-self:end"><button class="ghost" id="btnInspect">Analizar</button></div>
+    </div>
+    <div id="bar"><i></i></div>
+    <div id="info"></div>
+  </section>
+
+  <section class="card">
+    <h2>2 · Opciones</h2>
+    <div class="row">
+      <div><label for="engine">Motor de origen</label>
+        <select id="engine"><option value="auto">Detectar automáticamente</option><option value="psych">Psych Engine</option><option value="codename">Codename Engine</option></select></div>
+      <div><label for="ai">IA para scripts y análisis</label>
+        <select id="ai"><option value="auto">Automático (según clave)</option><option value="anthropic">Anthropic (Claude)</option><option value="openai">Compatible con OpenAI / Ollama</option><option value="none">Sin IA (offline)</option></select></div>
+    </div>
+    <div class="row" id="aiRow">
+      <div><label for="key">Clave de API (opcional)</label><input id="key" type="password" autocomplete="off" placeholder="sk-ant-…  /  vacío = usar variable de entorno"></div>
+      <div><label for="model">Modelo</label><input id="model" type="text" placeholder="por defecto"></div>
+      <div id="urlBox" class="hide"><label for="base">URL base</label><input id="base" type="text" placeholder="http://localhost:11434/v1"></div>
+    </div>
+    <p class="note">La clave solo se envía a este servidor local, se usa durante la conversión y no se guarda.</p>
+    <div class="row">
+      <div><label for="modid">ID del mod (opcional)</label><input id="modid" type="text" placeholder="mi-mod"></div>
+      <div><label for="save">Guardar también en carpeta (opcional)</label><input id="save" type="text" placeholder="vacío = solo descarga"></div>
+    </div>
+    <div style="margin-top:10px">
+      <label class="chk"><input type="checkbox" id="review"><span>Revisión con IA (segunda pasada)<small>Corrige APIs inventadas en los scripts traducidos. Gasta más tokens.</small></span></label>
+      <label class="chk"><input type="checkbox" id="mirror"><span>Duplicar <code>images/</code> en <code>shared/images/</code><small>Actívalo si en V-Slice no cargan los sprites.</small></span></label>
+      <label class="chk"><input type="checkbox" id="noscripts"><span>No convertir scripts<small>Solo charts, personajes, stages y assets.</small></span></label>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>3 · Convertir</h2>
+    <button id="go" disabled>Convertir a V-Slice</button>
+    <pre id="log" class="hide"></pre>
+  </section>
+
+  <section class="card hide" id="result">
+    <h2>Resultado</h2>
+    <div class="chips" id="chips"></div>
+    <div class="row" style="margin:0 0 14px"><div style="flex:0 0 auto"><a id="dl" href="#"><button>Descargar mod convertido (.zip)</button></a></div></div>
+    <div id="rep"></div>
+    <p class="note">Copia el contenido del ZIP a la carpeta <code>mods/</code> de V-Slice. Puedes borrar <code>_fnfconv/</code> al publicar.</p>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+let src = null, timer = null;
+
+async function api(url, body) {
+  const r = await fetch(url, {method: "POST", headers: {"X-FNFCONV": "1", "Content-Type": "application/json"}, body: JSON.stringify(body)});
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.status);
+  return j;
+}
+const esc = s => String(s).replace(/[&<>]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;"}[c]));
+
+function showInfo(j) {
+  src = j.path;
+  $("#path").value = j.root;
+  $("#info").innerHTML = `Motor detectado: <span class="badge ${j.engine}">${j.engine === "unknown" ? "no detectado" : j.engine}</span> · ${j.files} archivos · ${j.scripts} scripts` +
+    (j.engine === "unknown" ? `<div class="err">Elige el motor manualmente en las opciones.</div>` : `<div class="ev">${esc((j.evidence || []).join("  ·  "))}</div>`);
+  $("#go").disabled = false;
+}
+function fail(e) { $("#info").innerHTML = `<span class="err">${esc(e.message || e)}</span>`; }
+
+$("#btnInspect").onclick = async () => {
+  const p = $("#path").value.trim(); if (!p) return;
+  try { showInfo(await api("/api/inspect", {path: p})); } catch (e) { fail(e); }
+};
+
+function upload(f) {
+  if (!f.name.toLowerCase().endsWith(".zip")) return fail("Sube el mod como .zip");
+  const bar = $("#bar"), fill = bar.firstElementChild;
+  bar.style.display = "block"; fill.style.width = "0";
+  $("#info").textContent = "Subiendo y descomprimiendo…";
+  const x = new XMLHttpRequest();
+  x.open("POST", "/api/upload?name=" + encodeURIComponent(f.name));
+  x.setRequestHeader("X-FNFCONV", "1");
+  x.upload.onprogress = e => { if (e.lengthComputable) fill.style.width = (100 * e.loaded / e.total) + "%"; };
+  x.onload = () => {
+    bar.style.display = "none";
+    let j = {}; try { j = JSON.parse(x.responseText); } catch (_) {}
+    x.status === 200 ? showInfo(j) : fail(j.error || "Error al subir");
+  };
+  x.onerror = () => fail("No se pudo conectar con el servidor local");
+  x.send(f);
+}
+const drop = $("#drop");
+drop.onclick = () => $("#file").click();
+$("#file").onchange = e => e.target.files[0] && upload(e.target.files[0]);
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); e.dataTransfer.files[0] && upload(e.dataTransfer.files[0]); };
+
+$("#ai").onchange = () => {
+  $("#urlBox").classList.toggle("hide", $("#ai").value !== "openai");
+  $("#aiRow").classList.toggle("hide", $("#ai").value === "none");
+};
+
+function md(t) {
+  let h = "", inList = false;
+  for (const raw of t.split("\n")) {
+    const l = esc(raw).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`(.+?)`/g, "<code>$1</code>");
+    const li = l.startsWith("- ");
+    if (inList && !li) { h += "</ul>"; inList = false; }
+    if (l.startsWith("## ")) h += `<h2>${l.slice(3)}</h2>`;
+    else if (l.startsWith("# ")) h += `<h1>${l.slice(2)}</h1>`;
+    else if (li) { if (!inList) { h += "<ul>"; inList = true; } h += `<li>${l.slice(2)}</li>`; }
+    else if (l.trim()) h += `<p>${l}</p>`;
+  }
+  return h + (inList ? "</ul>" : "");
+}
+
+$("#go").onclick = async () => {
+  $("#go").disabled = true; $("#result").classList.add("hide");
+  const log = $("#log"); log.classList.remove("hide"); log.textContent = "Iniciando…\n";
+  try {
+    const {job} = await api("/api/convert", {
+      path: src, engine: $("#engine").value, ai: $("#ai").value, api_key: $("#key").value, model: $("#model").value,
+      base_url: $("#base").value, mod_id: $("#modid").value.trim(), save_to: $("#save").value.trim(),
+      ai_review: $("#review").checked, mirror_shared: $("#mirror").checked, no_scripts: $("#noscripts").checked});
+    timer = setInterval(() => poll(job), 700);
+  } catch (e) { log.textContent += "ERROR: " + e.message; $("#go").disabled = false; }
+};
+
+async function poll(job) {
+  const j = await (await fetch("/api/status?job=" + job)).json();
+  const log = $("#log"); log.textContent = j.log.join("\n"); log.scrollTop = log.scrollHeight;
+  if (j.state === "running") return;
+  clearInterval(timer); $("#go").disabled = false;
+  if (j.state === "error") { log.textContent += "\n\nERROR: " + j.error; return; }
+  const s = j.stats || {};
+  const chip = (cls, n, t) => `<div class="chip ${cls}"><b>${n}</b>${t}</div>`;
+  $("#chips").innerHTML = chip("k", s.songs || 0, "canciones") + chip("k", s.characters || 0, "personajes") + chip("k", s.stages || 0, "stages") +
+    chip("k", s.levels || 0, "weeks") + chip("w", j.warnings, "avisos") + chip("t", j.todo, "TODO manuales");
+  $("#rep").innerHTML = md(j.report);
+  $("#dl").href = "/api/download?job=" + job;
+  $("#result").classList.remove("hide");
+  $("#result").scrollIntoView({behavior: "smooth"});
+}
+</script>
+</body>
+</html>

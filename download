@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.fnfconv_cache/
+.fnfconv_tmp/
+out/
+salida/

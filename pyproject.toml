@@ -1,0 +1,19 @@
+[project]
+name = "fnfvslice-converter"
+version = "0.1.0"
+description = "Psych/Codename Engine -> V-Slice mod converter with AI-assisted script translation"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+fnfconv = "fnfconv.cli:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["fnfconv*"]
+
+[tool.setuptools.package-data]
+fnfconv = ["gui_static/*.html"]

@@ -40,8 +40,12 @@ def analyze_cmd(a):
 
 
 def gui_cmd(a):
+    import os
     from .gui import serve
-    serve(a.host, a.port, not a.no_browser)
+    web = a.web or bool(os.environ.get("PORT"))  # hosting platforms (Render, Railway, Fly, Heroku...) set $PORT
+    host = a.host or ("0.0.0.0" if web else "127.0.0.1")
+    port = a.port or int(os.environ.get("PORT") or 8765)
+    serve(host, port, not a.no_browser, web)
 
 
 def main(argv=None):
@@ -61,9 +65,10 @@ def main(argv=None):
             s.add_argument("--no-scripts", action="store_true")
             s.add_argument("--ai-review", action="store_true", help="second AI pass to fix invented APIs")
             s.add_argument("--mirror-shared", action="store_true", help="also copy images/ to shared/images/")
-    g = sub.add_parser("gui", help="open the local web GUI")
-    g.add_argument("--host", default="127.0.0.1")
-    g.add_argument("--port", type=int, default=8765)
+    g = sub.add_parser("gui", help="open the web GUI (local, or --web to host it on a server)")
+    g.add_argument("--host", help="default 127.0.0.1 (0.0.0.0 with --web)")
+    g.add_argument("--port", type=int, help="default $PORT or 8765")
+    g.add_argument("--web", action="store_true", help="hosted mode: uploads only, limits, auto-cleanup (implied by $PORT or a non-loopback --host)")
     g.add_argument("--no-browser", action="store_true")
     a = p.parse_args(argv)
     {"convert": convert, "analyze": analyze_cmd, "gui": gui_cmd}[a.cmd](a)

@@ -1,0 +1,10 @@
+# Despliegue en Render: New + > Blueprint > elige este repo.
+services:
+  - type: web
+    name: fnfvslice-converter
+    runtime: docker
+    plan: free
+    healthCheckPath: /healthz
+    envVars:
+      - key: FNFCONV_MAX_UPLOAD_MB
+        value: "512"

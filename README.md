@@ -42,6 +42,24 @@ Arrastra el `.zip` de tu mod (o escribe una ruta de carpeta), revisa el motor de
 y descarga el ZIP resultante junto con el reporte. Es un servidor local (solo `127.0.0.1`, sin dependencias): la clave de API
 no se guarda y las peticiones POST exigen una cabecera propia para evitar ataques CSRF.
 
+### Publicarla en la web
+
+La misma GUI se puede alojar en un servidor para que cualquiera la use desde el navegador (**no** funciona en GitHub Pages:
+necesita un servidor Python, porque el convertidor corre en el backend).
+
+```bash
+python -m fnfconv gui --web              # escucha en 0.0.0.0:$PORT (8765 si no hay $PORT)
+docker build -t fnfconv . && docker run -p 8080:8080 fnfconv
+```
+- **Render**: *New + → Blueprint* y elige este repo (usa `render.yaml`/`Dockerfile`). Railway, Fly.io y similares también sirven con el `Dockerfile`.
+- Si el programa detecta `$PORT` o un `--host` que no sea local, entra solo en **modo web**: solo procesa `.zip` subidos
+  (sin rutas de carpeta ni "guardar en carpeta"), limita tamaño y concurrencia, valida la URL base de la IA (solo `https` pública)
+  y borra subidas y resultados pasada 1 hora.
+- Variables opcionales: `FNFCONV_MAX_UPLOAD_MB` (512), `FNFCONV_MAX_UNZIPPED_MB` (2048), `FNFCONV_MAX_FILES` (50000),
+  `FNFCONV_MAX_JOBS` (2 conversiones a la vez), `FNFCONV_TTL_MIN` (60), `FNFCONV_WORK` (carpeta temporal).
+- Ponla detrás de HTTPS (los hostings anteriores ya lo hacen): la clave de API opcional viaja del navegador al servidor.
+  Ojo con los límites de cuerpo de petición del hosting o proxy: si tu mod pesa más, súbelo ya filtrado o conviértelo en local.
+
 ## Uso (línea de comandos)
 
 ```bash
